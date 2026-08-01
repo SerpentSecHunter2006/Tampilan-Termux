@@ -84,14 +84,32 @@ show_header() {
 }
 
 run_tool() {
-    clear
-    echo -e "${CYAN}${BOLD}══════════════════════════════════════════════════════════${NC}"
-    echo -e "${GREEN}${BOLD}  [RUNNING] $1${NC}"
-    echo -e "${CYAN}${BOLD}══════════════════════════════════════════════════════════${NC}"
+    local tool_name="$1"
+    local tool_cmd="$2"
+    local win_name
+
+    win_name="[$(echo "$tool_name" | tr '[:upper:]' '[:lower:]')]"
+
+    tmux new-window -n "$win_name" "bash -c '
+        echo -e \"\033[0;36m\033[1m\"
+        echo \"  ══════════════════════════════════════════════════════════\"
+        echo \"  [RUNNING] $tool_name\"
+        echo \"  ══════════════════════════════════════════════════════════\"
+        echo -e \"\033[0m\"
+        echo \"\"
+        $tool_cmd
+        echo \"\"
+        echo -e \"\033[1;33m  ══════════════════════════════════════════════════════════\033[0m\"
+        echo -e \"\033[1;32m  Selesai! Tekan ENTER untuk menutup jendela ini.\033[0m\"
+        read _
+        tmux kill-window
+    '"
+
     echo ""
-    eval "$2"
+    echo -e "  ${GREEN}${BOLD}✔ $tool_name diluncurkan di jendela tmux baru!${NC}"
+    echo -e "  ${YELLOW}  Gunakan ${BOLD}Ctrl+B lalu angka${NC}${YELLOW} untuk berpindah jendela.${NC}"
+    echo -e "  ${CYAN}  Gunakan ${BOLD}[77] Lihat Sesi Aktif${NC}${CYAN} untuk melihat tools yang berjalan.${NC}"
     echo ""
-    echo -e "${YELLOW}══════════════════════════════════════════════════════════${NC}"
     read -p "  Tekan [ENTER] untuk kembali ke menu..." _
 }
 
@@ -142,6 +160,7 @@ while true; do
     echo ""
 
     echo -e "${YELLOW}${BOLD}  ── [8] SESI ────────────────────────────────────────────${NC}"
+    echo -e "${CYAN}   [77] Lihat Jendela Aktif (Tools yang sedang berjalan)${NC}"
     echo -e "${YELLOW}   [88] Detach  (Keluar Termux, scan tetap jalan di background)${NC}"
     echo -e "${RED}   [00] Keluar  (Hentikan semua sesi)${NC}"
     echo ""
@@ -188,6 +207,16 @@ while true; do
         35)    run_tool "SECRETFINDER"   "python3 /storage/A84D-8FAD/Hacking/SecretFinder/SecretFinder.py" ;;
         36)    run_tool "NOTIFY"         "notify" ;;
         37)    run_tool "INTERACTSH-CLIENT" "interactsh-client" ;;
+        77)
+            clear
+            echo -e "${CYAN}${BOLD}  Jendela tmux yang aktif:${NC}"
+            echo ""
+            tmux list-windows -F "  [#I] #W" 2>/dev/null || echo -e "  ${YELLOW}Tidak ada sesi aktif.${NC}"
+            echo ""
+            echo -e "  ${YELLOW}Tip: Ctrl+B lalu nomor jendela untuk berpindah.${NC}"
+            echo ""
+            read -p "  Tekan [ENTER] untuk kembali ke menu..." _
+            ;;
         88)
             echo -e "${YELLOW}  Melepaskan sesi... Scan tetap berjalan di background.${NC}"
             sleep 1
